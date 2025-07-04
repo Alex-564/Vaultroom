@@ -11,7 +11,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<CreateSecretForm />} />
-        <Route path="/secret/:id" element={<SecretViewer />} />
+        <Route path="/secrets/:id" element={<SecretViewer />} />
         <Route path="/expired" element={<div className="text-center p-4">💥 This secret has expired or been viewed.</div>} />
       </Routes>
     </Router>

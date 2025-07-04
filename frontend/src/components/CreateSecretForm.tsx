@@ -28,7 +28,7 @@ export default function CreateSecretForm() {
         if (file) formData.append("file", file);
 
         // Post to backend
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/secrets/`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/secrets/`, {
             method: "POST",
             body: formData,
         });

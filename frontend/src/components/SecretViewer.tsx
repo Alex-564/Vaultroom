@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 type SecretResponse = {
@@ -11,16 +11,16 @@ type SecretResponse = {
 export default function SecretViewer() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const hasFetched = useRef(false); 
 
     const [secret, setSecret] = useState<SecretResponse | null>(null);
     const [error, setError] = useState("");
     const [isBlurred, setIsBlurred] = useState(false);
 
     // API call to return secret
-    useEffect(() => {
-        const fetchSecret = async () => {
+    const fetchSecret = async () => {
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/secrets/${id}`);
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/secrets/${id}`);
             if (!res.ok) throw new Error("Expired or already viewed");
             const data = await res.json();
             setSecret(data);
@@ -28,8 +28,11 @@ export default function SecretViewer() {
             setError("This secret has expired or been viewed already.");
             setTimeout(() => navigate("/expired"), 3000);
         }
-        };
+    };
 
+    useEffect(() => {
+        if (hasFetched.current) return;
+        hasFetched.current = true;
         fetchSecret();
 
         // Security: disable right-click and key combos
@@ -55,7 +58,7 @@ export default function SecretViewer() {
             window.removeEventListener("focus", handleFocus);
         };
 
-    }, [id, navigate]);
+    }, []);
 
     if (error) return <p className="text-red-600 text-center">{error}</p>;
 

@@ -26,7 +26,7 @@ app.state.limiter = limiter
 
 # VERCEL ORIGINS HERE
 origins = [
-
+    "http://localhost:5173",
 ]
 
 # Allow frontend dev env
@@ -47,11 +47,6 @@ async def create_Secret(
     file: UploadFile = File(None)
 ):
     
-    # Additional redis rate limiting for long term abuse
-    ip = request.client.host
-    key = f"vaultroom:rate:{ip}"
-
-
     # Valid type check
     if not message and not file:
         raise HTTPException(status_code=400, detail="Must provide message or file")
@@ -66,7 +61,7 @@ async def create_Secret(
         ttl=ttl
     )
 
-    return {"url": f"/secret/{secret_id}"}
+    return {"url": f"/secrets/{secret_id}"}
 
 
 @app.get("/api/secrets/{secret_id}", response_model=SecretResponse)
