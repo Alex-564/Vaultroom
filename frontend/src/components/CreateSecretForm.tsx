@@ -46,54 +46,80 @@ export default function CreateSecretForm() {
         }
     };
 
-    return (
-        <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto p-4">
-        <label className="block font-semibold">Secret Message</label>
+return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-4 font-mono">
+    <form
+      onSubmit={handleSubmit}
+      className="w-full max-w-lg bg-gray-800 text-white rounded-xl shadow-2xl p-6 space-y-6"
+    >
+      <h2 className="text-2xl font-bold text-center">Create a Secret</h2>
+
+      {/* Secret Message */}
+      <div>
+        <label className="block font-semibold mb-1">Secret Message</label>
         <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Enter your secret..."
-            className="w-full p-2 border rounded"
-            rows={4}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Enter your secret..."
+          className="w-full p-3 border border-gray-600 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          rows={4}
         />
-        
-        {/* ADD FILE ACCEPTANCES HERE */}
-        <label className="block font-semibold mt-4">Upload File (optional)</label>
-        <input
+      </div>
+
+      {/* Upload File */}
+      <div>
+        <label className="block font-semibold mb-1">Upload File (optional)</label>
+        <div className="relative">
+          <input
             type="file"
             accept=".pdf,.doc,.docx,.txt"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="w-full"
-        />
+            className="absolute inset-0 opacity-0 z-50 cursor-pointer"
+          />
+          <div className="bg-gray-700 text-white px-4 py-2 rounded w-full text-center cursor-pointer hover:bg-gray-600 transition-all">
+            {file ? file.name : "Choose File"}
+          </div>
+        </div>
+      </div>
 
-        {/* ADD EXPIRY TIMES HERE */}
-        <label className="block font-semibold mt-4">Expire After</label>
+      {/* Expire After */}
+      <div>
+        <label className="block font-semibold mb-1">Expire After</label>
         <select
-            value={ttl}
-            onChange={(e) => setTtl(Number(e.target.value))}
-            className="w-full p-2 border rounded"
+          value={ttl}
+          onChange={(e) => setTtl(Number(e.target.value))}
+          className="w-full p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-            <option value={60}>1 Minute</option>
-            <option value={600}>10 Minutes</option>
-            <option value={3600}>1 Hour</option>
-            <option value={86400}>1 Day</option>
+          <option value={60}>1 Minute</option>
+          <option value={600}>10 Minutes</option>
+          <option value={3600}>1 Hour</option>
+          <option value={86400}>1 Day</option>
         </select>
+      </div>
 
-        <button
-            type="submit"
-            className="bg-blue-600 text-white p-2 rounded w-full mt-4"
-            disabled={loading}
-        >
-            {loading ? "Creating..." : "Create Secret"}
-        </button>
+      {/* Submit Button */}
+      <button
+        type="submit"
+        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded w-full transition-all disabled:opacity-50"
+        disabled={loading}
+      >
+        {loading ? "Creating..." : "Create Secret"}
+      </button>
 
-        {link && (
-            <div className="mt-4">
-            <p className="text-green-600">Here’s your one-time link:</p>
-            <input value={link} readOnly className="w-full p-2 border rounded mt-2" />
-            </div>
-        )}
-        {error && <p className="text-red-600">{error}</p>}
-        </form>
-    );
+      {/* Output */}
+      {link && (
+        <div className="mt-4">
+          <p className="text-green-400">Here’s your one-time link:</p>
+          <input
+            value={link}
+            readOnly
+            className="w-full p-2 border border-gray-600 rounded mt-2 bg-gray-700 text-white"
+          />
+        </div>
+      )}
+
+      {error && <p className="text-red-500">{error}</p>}
+    </form>
+    </div>
+);
 }

@@ -60,37 +60,42 @@ export default function SecretViewer() {
 
     }, []);
 
-    if (error) return <p className="text-red-600 text-center">{error}</p>;
 
-    return (
-        <div className={`p-4 max-w-2xl mx-auto space-y-4 transition-all duration-300 ${isBlurred ? "filter blur-md pointer-events-none select-none" : ""}`}>
-            {secret?.message && (
-                <div className="p-4 border rounded bg-gray-100">
-                    <p>{secret.message}</p>
-                </div>
-            )}
-
-            {secret?.fileData && secret.fileMime?.includes("pdf") && (
-                <iframe
-                    src={`data:application/pdf;base64,${secret.fileData}`}
-                    title="Secure File"
-                    className="w-full h-[80vh] border rounded shadow"
-                    sandbox="allow-same-origin"
-                />
-            )}
-
-            {secret?.fileData && !secret.fileMime?.includes("pdf") && (
-                <div>
-                    <p className="text-gray-500 italic">Document preview not supported.</p>
-                </div>
-            )}
-
-            {/* BLUR MESSAGE */}
-            {isBlurred && (
-                <div className="fixed inset-0 bg-white bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50 text-xl text-gray-600">
-                    🔒 Content hidden while inactive
-                </div>
-            )}
+return (
+  <div className={`min-h-screen font-mono flex items-center justify-center bg-gray-900 text-white p-4 transition-all duration-300 ${isBlurred ? "pointer-events-none select-none blur-sm" : ""}`}>
+    <div className="w-full max-w-2xl space-y-6 bg-gray-800 p-6 rounded-xl shadow-lg">
+      <label className="block font-semibold mb-1">Secret Message</label>
+      {/* Secret message */}
+      {secret?.message && (
+        <div className="p-4 border border-gray-600 rounded bg-gray-700 text-white">
+          <p>{secret.message}</p>
         </div>
-    );
+      )}
+
+      {/* PDF Viewer */}
+      {secret?.fileData && secret.fileMime?.includes("pdf") && (
+        <iframe
+          src={`data:application/pdf;base64,${secret.fileData}`}
+          title="Secure File"
+          className="w-full h-[80vh] border border-gray-600 rounded shadow bg-gray-900"
+          sandbox="allow-same-origin"
+        />
+      )}
+
+      {/* Unsupported preview fallback */}
+      {secret?.fileData && !secret.fileMime?.includes("pdf") && (
+        <div className="text-gray-400 italic text-center">
+          Document preview not supported.
+        </div>
+      )}
+
+      {/* Blur Overlay */}
+      {isBlurred && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center z-50 text-xl text-gray-300">
+          🔒 Content hidden while inactive
+        </div>
+      )}
+    </div>
+  </div>
+);
 }
