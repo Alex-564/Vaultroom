@@ -72,7 +72,7 @@ return (
         <div className="relative">
           <input
             type="file"
-            accept=".pdf,.doc,.docx,.txt"
+            accept=".pdf,.txt, .jpeg, .jpg"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
             className="absolute inset-0 opacity-0 z-50 cursor-pointer"
           />

@@ -45,7 +45,7 @@ export default function SecretViewer() {
         } catch (err) {
             // forwards user to expired screen
             setError("This secret has expired or been viewed already.");
-            setTimeout(() => navigate("/expired"), 0);
+            navigate("/expired");
         }
     };
 
@@ -91,6 +91,12 @@ export default function SecretViewer() {
         console.error("[DEBUG] PDF load error:", error);
     };
 
+    const isImage = secret?.fileMime?.startsWith("image/");
+    const isPdf = secret?.fileMime?.includes("pdf")
+    const isText = secret?.fileMime === "text/plain";
+    const isSupported = isImage || isPdf || isText
+
+
     return (
         <div className={`min-h-screen font-mono flex items-center justify-center bg-gray-900 text-white p-4 transition-all duration-300 ${isBlurred ? "pointer-events-none select-none blur-sm" : ""}`}>
             <div className="w-full max-w-2xl space-y-6 bg-gray-800 p-6 rounded-xl shadow-lg">
@@ -102,6 +108,8 @@ export default function SecretViewer() {
                         <p>{secret.message}</p>
                     </div>
                 )}
+
+                <label className="block font-semibold mb-1">Attached File</label>
 
                 {/* PDF File Viewer */}
                 {pdfData && (
@@ -127,8 +135,22 @@ export default function SecretViewer() {
                     </div>
                 )}
 
+                {/* Image Viewer */}
+                {secret?.fileData && isImage && (
+                    <div className = "">
+                        <img src={`data:${secret?.fileMime};base64,${secret?.fileData}`} alt="Secret file" />
+                    </div>
+                )}
+
+                {/* Plaintext viewer */}
+                {secret?.fileData && isText && (
+                    <pre className = "p-4 border border-gray-600 rounded bg-gray-700 text-white overflow-x-auto text-wrap">
+                        {atob(secret?.fileData)}
+                    </pre>
+                )}
+
                 {/* Unsupported file fallback */}
-                {secret?.fileData && !secret.fileMime?.includes("pdf") && (
+                {secret?.fileData && !isSupported && (
                     <div className="text-gray-400 italic text-center">
                         Document preview not supported.
                     </div>
