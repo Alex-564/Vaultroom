@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Document, Page, pdfjs } from "react-pdf";
+
 
 type SecretResponse = {
     message?: string;
@@ -8,25 +10,42 @@ type SecretResponse = {
     fileData?: string; // base64 string
 };
 
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
+
 export default function SecretViewer() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const hasFetched = useRef(false); 
+    const hasFetched = useRef(false);
 
     const [secret, setSecret] = useState<SecretResponse | null>(null);
     const [error, setError] = useState("");
     const [isBlurred, setIsBlurred] = useState(false);
+    const [numPages, setNumPages] = useState<number | null>(null);
+    const [pageNumber, setPageNumber] = useState<number>(1);
+    const [pdfData, setPdfData] = useState<string | null>(null);
 
-    // API call to return secret
+    // Fetch secret from backend
     const fetchSecret = async () => {
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/secrets/${id}`);
             if (!res.ok) throw new Error("Expired or already viewed");
             const data = await res.json();
+            console.log("[DEBUG] Secret response:", data);
             setSecret(data);
+
+            // process PDF data
+            if (data.fileData && data.fileMime?.includes("pdf")) {
+                const base64Data = data.fileData.startsWith('data:') ? data.fileData : `data:application/pdf;base64,${data.fileData}`;
+                setPdfData(base64Data);
+            }
+
         } catch (err) {
+            // forwards user to expired screen
             setError("This secret has expired or been viewed already.");
-            setTimeout(() => navigate("/expired"), 3000);
+            setTimeout(() => navigate("/expired"), 0);
         }
     };
 
@@ -35,16 +54,20 @@ export default function SecretViewer() {
         hasFetched.current = true;
         fetchSecret();
 
-        // Security: disable right-click and key combos
-        const blockActions = (e: any) => {
-            if (e.button === 2 || e.ctrlKey || e.metaKey) e.preventDefault();
+        const base64Data = secret?.fileData
+        console.log("[DEBUG] Secret response:", base64Data);
+
+
+        // basic security to disable print screens
+        const blockActions = (e: MouseEvent | KeyboardEvent) => {
+            if ((e as MouseEvent).button === 2 || e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+            }
         };
 
-
-        // Blur listeners
+        // listeners to blur screen on unfocus
         const handleBlur = () => setIsBlurred(true);
         const handleFocus = () => setIsBlurred(false);
-
 
         window.addEventListener("contextmenu", blockActions);
         window.addEventListener("keydown", blockActions);
@@ -57,45 +80,74 @@ export default function SecretViewer() {
             window.removeEventListener("blur", handleBlur);
             window.removeEventListener("focus", handleFocus);
         };
+    }, [navigate]);
 
-    }, []);
+    const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+        setNumPages(numPages);
+        console.log("[DEBUG] PDF loaded successfully with", numPages, "pages");
+    };
 
+    const onDocumentLoadError = (error: Error) => {
+        console.error("[DEBUG] PDF load error:", error);
+    };
 
-return (
-  <div className={`min-h-screen font-mono flex items-center justify-center bg-gray-900 text-white p-4 transition-all duration-300 ${isBlurred ? "pointer-events-none select-none blur-sm" : ""}`}>
-    <div className="w-full max-w-2xl space-y-6 bg-gray-800 p-6 rounded-xl shadow-lg">
-      <label className="block font-semibold mb-1">Secret Message</label>
-      {/* Secret message */}
-      {secret?.message && (
-        <div className="p-4 border border-gray-600 rounded bg-gray-700 text-white">
-          <p>{secret.message}</p>
+    return (
+        <div className={`min-h-screen font-mono flex items-center justify-center bg-gray-900 text-white p-4 transition-all duration-300 ${isBlurred ? "pointer-events-none select-none blur-sm" : ""}`}>
+            <div className="w-full max-w-2xl space-y-6 bg-gray-800 p-6 rounded-xl shadow-lg">
+                <label className="block font-semibold mb-1">Secret Message</label>
+
+                {/* Secret text message (textual section) */}
+                {secret?.message && (
+                    <div className="p-4 border border-gray-600 rounded bg-gray-700 text-white">
+                        <p>{secret.message}</p>
+                    </div>
+                )}
+
+                {/* PDF File Viewer */}
+                {pdfData && (
+                    <div className="w-full border border-gray-600 rounded bg-black shadow">
+                        <Document
+                            file={pdfData}
+                            onLoadSuccess={onDocumentLoadSuccess}
+                            onLoadError={onDocumentLoadError}
+                            loading={<p className="text-gray-400 p-4">Loading PDF...</p>}
+                            error={<p className="text-red-500 p-4">Failed to load PDF. Please try again.</p>}
+                        >
+                            {numPages && Array.from({ length: numPages }, (_, i) => (
+                                <Page
+                                    key={`page_${i + 1}`}
+                                    pageNumber={i + 1}
+                                    renderTextLayer={false}
+                                    renderAnnotationLayer={false}
+                                    className="border-b border-gray-700"
+                                    width={600} // Add explicit width for better rendering
+                                />
+                            ))}
+                        </Document>
+                    </div>
+                )}
+
+                {/* Unsupported file fallback */}
+                {secret?.fileData && !secret.fileMime?.includes("pdf") && (
+                    <div className="text-gray-400 italic text-center">
+                        Document preview not supported.
+                    </div>
+                )}
+
+                {/* Error display */}
+                {error && (
+                    <div className="text-red-500 text-center p-4">
+                        {error}
+                    </div>
+                )}
+
+                {/* Blur Overlay */}
+                {isBlurred && (
+                    <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center z-50 text-xl text-gray-300">
+                         Content hidden while inactive
+                    </div>
+                )}
+            </div>
         </div>
-      )}
-
-      {/* PDF Viewer */}
-      {secret?.fileData && secret.fileMime?.includes("pdf") && (
-        <iframe
-          src={`data:application/pdf;base64,${secret.fileData}`}
-          title="Secure File"
-          className="w-full h-[80vh] border border-gray-600 rounded shadow bg-gray-900"
-          sandbox="allow-same-origin"
-        />
-      )}
-
-      {/* Unsupported preview fallback */}
-      {secret?.fileData && !secret.fileMime?.includes("pdf") && (
-        <div className="text-gray-400 italic text-center">
-          Document preview not supported.
-        </div>
-      )}
-
-      {/* Blur Overlay */}
-      {isBlurred && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center z-50 text-xl text-gray-300">
-          🔒 Content hidden while inactive
-        </div>
-      )}
-    </div>
-  </div>
-);
+    );
 }
