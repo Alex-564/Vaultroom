@@ -6,6 +6,8 @@ from fastapi import FastAPI, UploadFile, Form, File, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from redis.exceptions import RedisError
+
 from storage import save_secret, get_secret, redis
 
 from pydantic import BaseModel
@@ -77,3 +79,12 @@ async def retrieve_secret(secret_id: str):
         "fileData": base64.b64encode(result["file"]).decode() if result["file"] else None
     }
     return JSONResponse(content=response)
+
+
+@app.get("/healthcheck")
+async def healthcheck():
+    try:
+        await redis.ping()
+        return {"status": "ok"}
+    except RedisError:
+        raise HTTPException(status_code=503, detail="Redis Unavailable")
