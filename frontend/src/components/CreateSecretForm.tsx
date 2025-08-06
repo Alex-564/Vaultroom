@@ -32,18 +32,54 @@ export default function CreateSecretForm() {
             method: "POST",
             body: formData,
         });
+        console.log("Successfully posted secret to backend.")
 
-        if (!res.ok) throw new Error("Failed to create secret");
+        // if (!res.ok) throw new Error("Failed to create secret");
+        // const data = await res.json();
+        // setLink(`${window.location.origin}${data.url}`);
+
+        // } catch (err: any) {
+        // setError(err.message || "Something went wrong.");
+
+        // } finally {
+        // setLoading(false);
+
+        // };
+
+        // catch and distinguish error messages
+        if (!res.ok){
+          const rawError = await res.text();
+          let backendMessage =  `Server responded with status ${res.status}`;
+
+          try {
+            const parsed = JSON.parse(rawError);
+            backendMessage = parsed.error || parsed.message || backendMessage;
+
+          } catch {
+            if (rawError) backendMessage = rawError;
+          }
+          throw new Error(backendMessage);
+        }
+        
         const data = await res.json();
         setLink(`${window.location.origin}${data.url}`);
 
-        } catch (err: any) {
-        setError(err.message || "Something went wrong.");
+      } catch (err: unknown){
+        console.error("Error creating secret:", err);
 
-        } finally {
-        setLoading(false);
+        if (err instanceof TypeError) {
+          setError("Unable to contact server. Please try again later.");
+        
+        } else if (err instanceof Error) {
+          setError(err.message || "Failed to create secret.");
 
+        } else {
+          setError("Failed to create secret.");
         }
+
+      } finally {
+        setLoading(false);
+      }
     };
 
 return (

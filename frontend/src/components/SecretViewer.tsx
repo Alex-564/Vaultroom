@@ -21,19 +21,35 @@ export default function SecretViewer() {
     const hasFetched = useRef(false);
 
     const [secret, setSecret] = useState<SecretResponse | null>(null);
+
     const [error, setError] = useState("");
+    const [errorDetails, setErrorDetails] = useState<string | null>(null);
+
     const [isBlurred, setIsBlurred] = useState(false);
     const [numPages, setNumPages] = useState<number | null>(null);
-    //const [pageNumber, setPageNumber] = useState<number>(1);
+
     const [pdfData, setPdfData] = useState<string | null>(null);
 
     // Fetch secret from backend
     const fetchSecret = async () => {
         try {
+            setError("");
+            setErrorDetails(null);
+
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/secrets/${id}`);
-            if (!res.ok) throw new Error("Expired or already viewed");
+            
+            //if (!res.ok) throw new Error("Expired or already viewed");
+            if (res.status === 404) {
+                navigate("/expired");
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(`Request failed with status ${res.status}`);
+            }
+            
+
             const data = await res.json();
-            console.log("[DEBUG] Secret response:", data);
+            console.log("[DEBUG] Secret response successfully fetched:", data);
             setSecret(data);
 
             // process PDF data
@@ -43,9 +59,15 @@ export default function SecretViewer() {
             }
 
         } catch (err) {
-            // forwards user to expired screen
-            setError("This secret has expired or been viewed already.");
-            navigate("/expired");
+            // Catch and display unknown/unexpected errors
+            console.error("Error fetching secret:", err);
+
+            setError("Failed to retrieve the secret. Please check your connection and try again.");
+            if (err instanceof Error) {
+                setErrorDetails(err.message);
+            } else {
+                setErrorDetails(String(err));
+            }
         }
     };
 
@@ -158,8 +180,11 @@ export default function SecretViewer() {
 
                 {/* Error display */}
                 {error && (
-                    <div className="text-red-500 text-center p-4">
-                        {error}
+                    <div className="text-red-500 text-center p-4 space-y-2">
+                        <p>{error}</p>
+                        {errorDetails && (
+                            <p className="text-xs text-gray-400">{errorDetails}</p>
+                        )}
                     </div>
                 )}
 
