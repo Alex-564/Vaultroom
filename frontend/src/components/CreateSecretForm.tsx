@@ -1,4 +1,4 @@
-import React, { useState, type ReactHTMLElement } from "react";
+import React, { useState } from "react";
 
 export default function CreateSecretForm() {
 
