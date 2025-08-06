@@ -13,6 +13,9 @@ from storage import save_secret, get_secret, redis
 from pydantic import BaseModel
 import base64
 
+import os
+from dotenv import load_dotenv
+
 # Pydantic model 
 class SecretResponse(BaseModel):
     message: str | None = None
@@ -26,9 +29,12 @@ limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
 app.state.limiter = limiter
 
-# VERCEL ORIGINS HERE
+# VERCEL AND UPTIME ORIGINS HERE
+load_dotenv()
+FRONTEND_ORIGIN = os.getenv("VERCEL_URL")
+
 origins = [
-    "http://localhost:5173",
+    FRONTEND_ORIGIN,
 ]
 
 # Allow frontend dev env

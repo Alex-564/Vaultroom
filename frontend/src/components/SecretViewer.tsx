@@ -24,7 +24,7 @@ export default function SecretViewer() {
     const [error, setError] = useState("");
     const [isBlurred, setIsBlurred] = useState(false);
     const [numPages, setNumPages] = useState<number | null>(null);
-    const [pageNumber, setPageNumber] = useState<number>(1);
+    //const [pageNumber, setPageNumber] = useState<number>(1);
     const [pdfData, setPdfData] = useState<string | null>(null);
 
     // Fetch secret from backend
