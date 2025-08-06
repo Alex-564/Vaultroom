@@ -16,6 +16,10 @@ import base64
 import os
 from dotenv import load_dotenv
 
+
+MAX_FILE_SIZE = 5 * 1024 * 1024 # 5mb
+
+
 # Pydantic model 
 class SecretResponse(BaseModel):
     message: str | None = None
@@ -59,6 +63,10 @@ async def create_Secret(
 
     # Parse data, save it to redis, generate URL
     file_data = await file.read() if file else None
+
+    if file_data and len(file_data) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File size too large")
+
     secret_id = save_secret(
         message=message,
         file=file_data,
@@ -89,6 +97,6 @@ async def retrieve_secret(secret_id: str):
 def healthcheck():
     try:
         redis.ping()
-        return {"status": "ok"}
+        return JSONResponse(status_code=200, content={"status": "ok"})
     except RedisError:
         raise HTTPException(status_code=503, detail="Redis Unavailable")

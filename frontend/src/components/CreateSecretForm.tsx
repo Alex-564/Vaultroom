@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, type ReactHTMLElement } from "react";
 
 export default function CreateSecretForm() {
 
@@ -82,6 +82,21 @@ export default function CreateSecretForm() {
       }
     };
 
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const selected = e.target.files?.[0];
+
+      if (selected && selected.size > MAX_FILE_SIZE){
+        alert("File is too large. Max size is 5MB");
+        setFile(null);
+
+      } else {
+        setFile(selected || null);
+      }
+    }
+
+
 return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-4 font-mono">
     <form
@@ -109,7 +124,7 @@ return (
           <input
             type="file"
             accept=".pdf,.txt, .jpeg, .jpg"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            onChange={handleFileChange}
             className="absolute inset-0 opacity-0 z-50 cursor-pointer"
           />
           <div className="bg-gray-700 text-white px-4 py-2 rounded w-full text-center cursor-pointer hover:bg-gray-600 transition-all">
