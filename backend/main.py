@@ -88,9 +88,9 @@ async def retrieve_secret(secret_id: str):
 
 
 @app.get("/healthcheck")
-async def healthcheck():
+def healthcheck():
     try:
-        await redis.ping()
+        redis.ping()
         return {"status": "ok"}
     except RedisError:
         raise HTTPException(status_code=503, detail="Redis Unavailable")
