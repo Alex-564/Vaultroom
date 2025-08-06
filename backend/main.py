@@ -31,11 +31,9 @@ app.state.limiter = limiter
 
 # VERCEL AND UPTIME ORIGINS HERE
 load_dotenv()
-FRONTEND_ORIGIN = os.getenv("VERCEL_URL")
+FRONTEND_ORIGIN = os.getenv("VERCEL_URL","").split(",")
 
-origins = [
-    FRONTEND_ORIGIN,
-]
+origins = [origin.strip() for origin in FRONTEND_ORIGIN if origin.strip()]
 
 # Allow frontend dev env
 app.add_middleware(
