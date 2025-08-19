@@ -48,6 +48,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Harsher previewer prevention 
+@app.middleware("http")
+async def block_preview_bots(request: Request, call_next):
+    user_agent = request.headers.get("user-agent","").lower().strip()
+    path = request.url.path
+    bots = ["facebookexternalhit", "slackbot", "discordbot", "whatsapp", "instagram", "telegram", "preview", "bot"]
+
+    if any(bot in user_agent for bot in bots) and path.startswith("/api/secrets/"):
+        return JSONResponse(status_code=403, content={"detail": "Preview blocked to protect secret."})
+    
+    return await call_next(request)
+
 @app.post("/api/secrets/", response_model=SecretResponse)
 @limiter.limit("5/minute;50/hour")
 async def create_Secret(
@@ -84,13 +96,21 @@ async def retrieve_secret(secret_id: str):
     if not result:
         raise HTTPException(status_code=404, detail="Secret not found or expired")
 
-    response = {
+    response_content = {
         "message": result["message"],
         "fileName": result["file_name"],
         "fileMime": result["file_mime"],
         "fileData": base64.b64encode(result["file"]).decode() if result["file"] else None
     }
-    return JSONResponse(content=response)
+
+    response = JSONResponse(content=response_content)
+
+    # Preview, browser caching and refetch prevention
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, proxy-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+
+    return response
 
 
 @app.get("/healthcheck")
